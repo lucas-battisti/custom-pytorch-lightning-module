@@ -28,9 +28,10 @@ def var_squared_errors(
     Returns:
         float: _description_
     """
-    squared_errors = (
+
+    squared_errors = np.square(
         np.array(actual) - np.array(predicted)
-    ) ^ 2  # W_k = (Y_k - \hat{Y}_k)^2
+    )  # W_k = (Y_k - \hat{Y}_k)^2
 
     return np.var(squared_errors)  # \frac{1}{m} \sum_{k = 1}^m (W_k - \bar{W})^2
 
