@@ -11,6 +11,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 
+def var_squared_errors(predicted: torch.Tensor|np.ndarray|list,
+                      actual: torch.Tensor|np.ndarray|list) -> float:
+    """    
+    W_k = (Y_k - \hat{Y}_k)^2
+        
+    \hat{\sigma}^2 = \frac{1}{m} \sum_{k = 1}^m (W_k - \bar{W})^2
+
+    Args:
+        predicted (torch.Tensor | np.ndarray | list): _description_
+        actual (torch.Tensor | np.ndarray | list): _description_
+
+    Returns:
+        float: _description_
+    """
+    squared_errors = (np.array(actual) - np.array(predicted))^2 # W_k = (Y_k - \hat{Y}_k)^2
+    
+    return np.var(squared_errors) # \frac{1}{m} \sum_{k = 1}^m (W_k - \bar{W})^2
+
 def predicted_vs_actual(predicted: torch.Tensor|np.ndarray|list,
                         actual: torch.Tensor|np.ndarray|list) -> matplotlib.figure.Figure:
     """
@@ -31,8 +49,10 @@ def predicted_vs_actual(predicted: torch.Tensor|np.ndarray|list,
     ax.set_xlim(0, 7)
     ax.set_ylim(0, 7)
     ax.set_aspect('equal', adjustable='box')
-    ax.set_xlabel('Ẑ')
-    ax.set_ylabel('Z')
+    ax.set_xlabel('predicted')
+    ax.set_ylabel('actual')
+    fig.suptitle('Estimated variance of squared errors: '
+                 + str(var_squared_errors(predicted, actual)), fontsize=16)
     return fig
 
 
@@ -52,9 +72,9 @@ class RegressionModule(L.LightningModule):
     
     """
     def __init__(self, *args, pytorch_module: nn.Module,
-                 loss_func: Union[Callable[..., None], str], loss_func_args: dict={},
-                 optimizer: Union[Callable[..., None], str], optimizer_args: dict={},
-                 lr_scheduler: Optional[Union[Callable[..., None], str]]=None,
+                 loss_func: Callable[..., None], loss_func_args: dict={},
+                 optimizer: Callable[..., None], optimizer_args: dict={},
+                 lr_scheduler: Optional[Callable[..., None]]=None,
                  lr_scheduler_args: dict={},
                  tb_dir='',
                  **kwargs) -> None:
@@ -62,24 +82,12 @@ class RegressionModule(L.LightningModule):
 
         self.pytorch_module = pytorch_module
         
-        if isinstance(loss_func, str):
-            self.loss_func = eval("nn." + loss_func + "(**loss_func_args)")
-        else:
-            self.loss_func = loss_func(**loss_func_args)
+        self.loss_func = loss_func(**loss_func_args)
             
-        if isinstance(optimizer, str):
-            self.optimizer = eval("torch.optim."
-                                  + optimizer
-                                  + "(self.parameters(), **optimizer_args)")
-        else:
-            self.optimizer = optimizer(self.parameters(), **optimizer_args)
+        self.optimizer = optimizer(self.parameters(), **optimizer_args)
             
         if lr_scheduler is None:
             self.lr_scheduler = None
-        elif isinstance(lr_scheduler, str):
-            self.lr_scheduler = eval("torch.optim.lr_scheduler."
-                                     + lr_scheduler
-                                     + "(self.optimizer, **lr_scheduler_args)")
         else:
             self.lr_scheduler = lr_scheduler(self.optimizer, **lr_scheduler_args)
 
@@ -138,9 +146,9 @@ class RegressionModule(L.LightningModule):
         actual = self.current_epoch_validation_targets.compute() #last epoch
         predicted = self.current_epoch_validation_outputs.compute() #last epoch
 
-        desv_var = np.var(np.array(actual) - np.array(predicted))
+        var_squared_errors = var_squared_errors(predicted, actual)
 
-        self.tb.experiment.add_scalar("desvio_var (validation)", desv_var)
+        self.tb.experiment.add_scalar("var_squared_errors (validation)", var_squared_errors)
 
         self.tb.experiment.add_figure('predicted vs. actual (validation)',
                                       predicted_vs_actual(predicted, actual))
@@ -164,10 +172,10 @@ class RegressionModule(L.LightningModule):
         predicted = self.current_epoch_test_outputs.compute()
 
         test_loss = self.loss_func(actual, predicted)
-        desv_var = np.var(np.array(actual) - np.array(predicted))
+        var_squared_errors = var_squared_errors(predicted, actual)
 
         self.tb.experiment.add_scalar("test_loss", test_loss)
-        self.tb.experiment.add_scalar("desvio_var (test)", desv_var)
+        self.tb.experiment.add_scalar("var_squared_errors (test)", var_squared_errors)
 
         self.tb.experiment.add_figure('predicted vs. actual (test)',
                                       predicted_vs_actual(predicted, actual))
