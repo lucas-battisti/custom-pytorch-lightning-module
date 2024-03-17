@@ -102,14 +102,12 @@ class RegressionModule(L.LightningModule):
 
         self.loss_func = loss_func(**loss_func_args)
 
-        self.optimizer = optimizer
-        self.optimizer_args = optimizer_args
+        self.optimizer = optimizer(pytorch_module.parameters(), **optimizer_args)
 
         if lr_scheduler is None:
             self.lr_scheduler = None
         else:
-            self.lr_scheduler = lr_scheduler
-            self.lr_scheduler_args = lr_scheduler_args
+            self.lr_scheduler = lr_scheduler(self.optimizer, **lr_scheduler_args)
 
         self.tb = loggers.TensorBoardLogger(save_dir=tb_dir)
 
@@ -212,13 +210,9 @@ class RegressionModule(L.LightningModule):
 
     def configure_optimizers(self):
         
-        self.optimizer = self.optimizer(self.parameters(), **self.optimizer_args)
-
         if self.lr_scheduler is None:
             return self.optimizer
-        else:
-            self.lr_scheduler = self.lr_scheduler(self.optimizer, **self.lr_scheduler_args)
-
+        
         return {
             "optimizer": self.optimizer,
             "lr_scheduler": {
