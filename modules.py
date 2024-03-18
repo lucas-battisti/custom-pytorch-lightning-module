@@ -13,8 +13,8 @@ import matplotlib
 
 
 def var_squared_errors(
-    predicted: torch.Tensor | np.ndarray | list,
-    actual: torch.Tensor | np.ndarray | list,
+    predicted: torch.Tensor,
+    actual: torch.Tensor,
 ) -> float:
     """
     W_k = (Y_k - \hat{Y}_k)^2
@@ -22,38 +22,38 @@ def var_squared_errors(
     \hat{\sigma}^2 = \frac{1}{m} \sum_{k = 1}^m (W_k - \bar{W})^2
 
     Args:
-        predicted (torch.Tensor | np.ndarray | list): _description_
-        actual (torch.Tensor | np.ndarray | list): _description_
+        predicted (torch.Tensor): _description_
+        actual (torch.Tensor): _description_
 
     Returns:
         float: _description_
     """
 
-    squared_errors = np.square(
-        np.array(actual) - np.array(predicted)
+    squared_errors = torch.square(
+        actual - predicted
     )  # W_k = (Y_k - \hat{Y}_k)^2
 
-    return np.var(squared_errors)  # \frac{1}{m} \sum_{k = 1}^m (W_k - \bar{W})^2
+    return torch.var(squared_errors, correction=0)  # \frac{1}{m} \sum_{k = 1}^m (W_k - \bar{W})^2
 
 
 def predicted_vs_actual(
-    predicted: torch.Tensor | np.ndarray | list,
-    actual: torch.Tensor | np.ndarray | list,
+    predicted: torch.Tensor,
+    actual: torch.Tensor,
 ) -> matplotlib.figure.Figure:
     """
     Generate a scatter plot depicting the relationship between predicted and actual values
     for a response variable.
 
     Args:
-        predicted (torch.Tensor | np.ndarray | list): vector of predicted values.
-        actual (torch.Tensor | np.ndarray | list): vector of actual values.
+        predicted (torch.Tensor ): vector of predicted values.
+        actual (torch.Tensor): vector of actual values.
 
     Returns:
         matplotlib.figure.Figure: A Matplotlib Figure object representing the scatter plot.
     """
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.scatter(np.array(predicted), np.array(actual))
+    ax.scatter(predicted.tolist(), actual.tolist())
     ax.axline((1.5, 1.5), (1.51, 1.51), color="r")
     ax.set_xlim(0, 7)
     ax.set_ylim(0, 7)
