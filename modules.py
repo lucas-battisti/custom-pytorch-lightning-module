@@ -139,7 +139,7 @@ class RegressionModule(L.LightningModule):
 
         self.tb.experiment.add_scalars(
             "losses", {"training_loss": epoch_loss}, global_step=self.current_epoch
-        )
+        ) 
 
     def on_validation_epoch_start(self):
         self.current_epoch_validation_targets = CatMetric()
