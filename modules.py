@@ -33,7 +33,7 @@ def var_squared_errors(
         actual - predicted
     )  # W_k = (Y_k - \hat{Y}_k)^2
 
-    return torch.var(squared_errors, correction=0)  # \frac{1}{m} \sum_{k = 1}^m (W_k - \bar{W})^2
+    return torch.var(squared_errors, correction=0).item()  # \frac{1}{m} \sum_{k = 1}^m (W_k - \bar{W})^2
 
 
 def predicted_vs_actual(
