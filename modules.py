@@ -158,14 +158,25 @@ class RegressionModule(L.LightningModule):
         return loss
 
     def on_validation_epoch_end(self):
+        
+        actual = self.current_epoch_validation_targets.compute()  # current epoch
+        predicted = self.current_epoch_validation_outputs.compute()  #  current epoch
+        
         epoch_loss = self.loss_func(
-            self.current_epoch_validation_outputs.compute(),
-            self.current_epoch_validation_targets.compute(),
+            predicted,
+            actual,
         )
+
+        sig = var_squared_errors(predicted, actual)
 
         self.tb.experiment.add_scalars(
             "losses", {"validation_loss": epoch_loss}, global_step=self.current_epoch
         )
+        
+        self.tb.experiment.add_scalar(
+            "var_squared_errors (validation)", sig, global_step=self.current_epoch
+        )
+    
 
     def on_validation_end(self):
         actual = self.current_epoch_validation_targets.compute()  # last epoch
