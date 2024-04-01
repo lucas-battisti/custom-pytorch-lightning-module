@@ -174,7 +174,7 @@ class RegressionModule(L.LightningModule):
         )
         
         self.tb.experiment.add_scalar(
-            "var_squared_errors (validation)", sig, global_step=self.current_epoch
+            "var_squared_errors_per_epoch (validation)", sig, global_step=self.current_epoch
         )
     
 
