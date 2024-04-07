@@ -132,14 +132,56 @@ class RegressionModule(L.LightningModule):
         return loss
 
     def on_train_epoch_end(self):
+        actual = self.current_epoch_train_targets.compute()  # current epoch
+        predicted = self.current_epoch_train_outputs.compute()  #  current epoch
+        
         epoch_loss = self.loss_func(
-            self.current_epoch_train_targets.compute(),
-            self.current_epoch_train_outputs.compute(),
+            predicted,
+            actual,
         )
-
+        
         self.tb.experiment.add_scalars(
             "losses", {"training_loss": epoch_loss}, global_step=self.current_epoch
-        ) 
+        )
+        
+        squared_errors = torch.square(
+        actual - predicted
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (train)", {"min": squared_errors.min().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (train)", {"q1": squared_errors.quantile(0.25).item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (train)", {"median": squared_errors.median().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (train)", {"q3": squared_errors.quantile(0.75).item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (train)", {"max": squared_errors.max().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (train)", {"mean": squared_errors.mean().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (train)", {"std": squared_errors.std().item()},
+            global_step=self.current_epoch
+        )
 
     def on_validation_epoch_start(self):
         self.current_epoch_validation_targets = CatMetric()
@@ -167,29 +209,47 @@ class RegressionModule(L.LightningModule):
             actual,
         )
 
-        sig = var_squared_errors(predicted, actual)
-
         self.tb.experiment.add_scalars(
             "losses", {"validation_loss": epoch_loss}, global_step=self.current_epoch
         )
         
-        self.tb.experiment.add_scalar(
-            "var_squared_errors_per_epoch (validation)", sig, global_step=self.current_epoch
+        squared_errors = torch.square(
+        actual - predicted
         )
-    
-
-    def on_validation_end(self):
-        actual = self.current_epoch_validation_targets.compute()  # last epoch
-        predicted = self.current_epoch_validation_outputs.compute()  # last epoch
-
-        sig = var_squared_errors(predicted, actual)
-
-        self.tb.experiment.add_scalar(
-            "var_squared_errors (validation)", sig
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (validation)", {"min": squared_errors.min().item()},
+            global_step=self.current_epoch
         )
-
-        self.tb.experiment.add_figure(
-            "predicted vs. actual (validation)", predicted_vs_actual(predicted, actual)
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (validation)", {"q1": squared_errors.quantile(0.25).item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (validation)", {"median": squared_errors.median().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (validation)", {"q3": squared_errors.quantile(0.75).item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (validation)", {"max": squared_errors.max().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (validation)", {"mean": squared_errors.mean().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (validation)", {"std": squared_errors.std().item()},
+            global_step=self.current_epoch
         )
 
     def on_test_epoch_start(self):
@@ -211,10 +271,47 @@ class RegressionModule(L.LightningModule):
         predicted = self.current_epoch_test_outputs.compute()
 
         test_loss = self.loss_func(actual, predicted)
-        sig = var_squared_errors(predicted, actual)
 
         self.tb.experiment.add_scalar("test_loss", test_loss)
-        self.tb.experiment.add_scalar("var_squared_errors (test)", sig)
+        
+        squared_errors = torch.square(
+        actual - predicted
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (test)", {"min": squared_errors.min().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (test)", {"q1": squared_errors.quantile(0.25).item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (test)", {"median": squared_errors.median().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (test)", {"q3": squared_errors.quantile(0.75).item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (test)", {"max": squared_errors.max().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (test)", {"mean": squared_errors.mean().item()},
+            global_step=self.current_epoch
+        )
+        
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (test)", {"std": squared_errors.std().item()},
+            global_step=self.current_epoch
+        )
 
         self.tb.experiment.add_figure(
             "predicted vs. actual (test)", predicted_vs_actual(predicted, actual)
