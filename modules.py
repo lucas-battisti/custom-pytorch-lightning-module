@@ -183,6 +183,11 @@ class RegressionModule(L.LightningModule):
             global_step=self.current_epoch
         )
 
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (train)", {"size": squared_errors.size(dim=0)},
+            global_step=self.current_epoch
+        )
+
     def on_validation_epoch_start(self):
         self.current_epoch_validation_targets = CatMetric()
         self.current_epoch_validation_outputs = CatMetric()
@@ -252,6 +257,11 @@ class RegressionModule(L.LightningModule):
             global_step=self.current_epoch
         )
 
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (validation)", {"size": squared_errors.size(dim=0)},
+            global_step=self.current_epoch
+        )
+
     def on_test_epoch_start(self):
         self.current_epoch_test_targets = CatMetric()
         self.current_epoch_test_outputs = CatMetric()
@@ -310,6 +320,11 @@ class RegressionModule(L.LightningModule):
         
         self.tb.experiment.add_scalars(
             "squared_errors_stats (test)", {"std": squared_errors.std().item()},
+            global_step=self.current_epoch
+        )
+
+        self.tb.experiment.add_scalars(
+            "squared_errors_stats (test)", {"size": squared_errors.size(dim=0)},
             global_step=self.current_epoch
         )
 
